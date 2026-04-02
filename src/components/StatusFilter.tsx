@@ -22,10 +22,10 @@ export default function StatusFilter({ activeStatus, counts }: StatusFilterProps
         <Link
           key={key}
           href={key === "all" ? "/" : `/?status=${key}`}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-sm text-xs font-light tracking-[0.12em] uppercase transition-colors ${
             activeStatus === key
-              ? "bg-amber-800 text-white"
-              : "bg-white text-stone-600 border border-stone-200 hover:border-amber-400 hover:text-amber-800"
+              ? "bg-stone-700 text-stone-100"
+              : "bg-transparent text-stone-500 border border-stone-300 hover:border-stone-500 hover:text-stone-700"
           }`}
         >
           {label}

@@ -14,4 +14,6 @@ export interface Book {
   review?: string; // your personal review (only shown when finished)
   startedDate?: string; // ISO date string
   finishedDate?: string; // ISO date string
+  spineHeight?: number; // override calculated spine height in px
+  spineWidth?: number;  // override calculated spine width in px
 }

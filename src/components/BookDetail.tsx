@@ -5,6 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Book } from "@/types/book";
 
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+
+// Deterministic formatter — avoids server/client ICU differences with toLocaleDateString
+function formatMonthYear(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 interface BookDetailProps {
   book: Book;
 }
@@ -71,11 +82,7 @@ export default function BookDetail({ book }: BookDetailProps) {
               <>
                 <span>·</span>
                 <span>
-                  Finished{" "}
-                  {new Date(book.finishedDate).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  Finished {formatMonthYear(book.finishedDate)}
                 </span>
               </>
             )}
@@ -100,6 +107,7 @@ export default function BookDetail({ book }: BookDetailProps) {
                   animate={{ rotate: isOpen ? 90 : 0 }}
                   transition={{ duration: 0.2 }}
                   className="inline-block"
+                  suppressHydrationWarning
                 >
                   ▶
                 </motion.span>
