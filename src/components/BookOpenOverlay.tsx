@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
-import Image from "next/image";
 import { Book } from "@/types/book";
 
 /** One page: width × height (2:3); spread = 2× width */
@@ -308,12 +307,17 @@ export default function BookOpenOverlay({ book, onClose }: Props) {
                 }}
               >
                 {book.coverImage && (
-                  <Image
+                  <img
                     src={book.coverImage}
                     alt={book.title}
-                    fill
-                    unoptimized
                     className="object-contain"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
                   />
                 )}
               </div>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import { Book } from "@/types/book";
 
 const MONTHS = [
@@ -46,12 +45,11 @@ export default function BookDetail({ book }: BookDetailProps) {
         {/* Book cover */}
         <div className="flex-shrink-0">
           {book.coverImage && !coverError ? (
-            <Image
+            <img
               src={book.coverImage}
               alt={`Cover of ${book.title}`}
               width={120}
               height={180}
-              unoptimized
               className="rounded object-contain"
               style={{
                 width: "120px",
