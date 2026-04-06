@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { Book } from "@/types/book";
 
 const MONTHS = [
@@ -28,6 +29,7 @@ const STATUS_STYLES: Record<Book["status"], { label: string; className: string }
 
 export default function BookDetail({ book }: BookDetailProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [coverError, setCoverError] = useState(false);
   const status = STATUS_STYLES[book.status];
 
   return (
@@ -41,17 +43,34 @@ export default function BookDetail({ book }: BookDetailProps) {
       </Link>
 
       <div className="flex flex-col md:flex-row gap-10 items-start">
-        {/* Book cover / spine visual */}
+        {/* Book cover */}
         <div className="flex-shrink-0">
-          <div
-            className="rounded shadow-2xl"
-            style={{
-              width: "120px",
-              height: "180px",
-              backgroundColor: book.coverColor,
-              boxShadow: "8px 8px 20px rgba(0,0,0,0.3), inset -4px 0 8px rgba(0,0,0,0.2)",
-            }}
-          />
+          {book.coverImage && !coverError ? (
+            <Image
+              src={book.coverImage}
+              alt={`Cover of ${book.title}`}
+              width={120}
+              height={180}
+              unoptimized
+              className="rounded object-contain"
+              style={{
+                width: "120px",
+                height: "180px",
+                boxShadow: "8px 8px 20px rgba(0,0,0,0.3)",
+              }}
+              onError={() => setCoverError(true)}
+            />
+          ) : (
+            <div
+              className="rounded"
+              style={{
+                width: "120px",
+                height: "180px",
+                backgroundColor: book.coverColor,
+                boxShadow: "8px 8px 20px rgba(0,0,0,0.3), inset -4px 0 8px rgba(0,0,0,0.2)",
+              }}
+            />
+          )}
         </div>
 
         {/* Book info */}

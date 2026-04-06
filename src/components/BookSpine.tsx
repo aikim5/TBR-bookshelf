@@ -5,6 +5,7 @@ import { Book } from "@/types/book";
 
 interface BookSpineProps {
   book: Book;
+  onSelect?: (book: Book) => void;
 }
 
 function isLightColor(hex: string): boolean {
@@ -18,13 +19,13 @@ function getSpineHeight(pages: number, title: string, author: string, override?:
   if (override) return override;
   // Wider range of base heights for more visual variety on the shelf
   const base =
-    pages < 150 ? 195 :
-    pages < 200 ? 212 :
-    pages < 250 ? 228 :
-    pages < 310 ? 250 :
-    pages < 370 ? 272 :
-    pages < 450 ? 286 :
-    300;
+    pages < 150 ? 240 :
+    pages < 200 ? 255 :
+    pages < 250 ? 265 :
+    pages < 310 ? 275 :
+    pages < 370 ? 285 :
+    pages < 450 ? 295 :
+    305;
   // In writing-mode: vertical-rl, uppercase rotated Latin chars advance ~6.5px each (title at 9px)
   // and ~5.5px each (author at 8px). Add 55px for padding, status icon, and justify-between gaps.
   const minForContent = Math.ceil(title.length * 6.5 + author.length * 5.5 + 55);
@@ -297,7 +298,7 @@ function getSpineDecoration(id: string, light: boolean, w: number, h: number): R
   }
 }
 
-export default function BookSpine({ book }: BookSpineProps) {
+export default function BookSpine({ book, onSelect }: BookSpineProps) {
   const height = getSpineHeight(book.pages, book.title, book.author, book.spineHeight);
   const width = book.spineWidth ?? getSpineWidth(book.pages);
   const light = isLightColor(book.coverColor);
@@ -307,12 +308,8 @@ export default function BookSpine({ book }: BookSpineProps) {
   const accentBg = light ? "rgba(28, 22, 16, 0.07)" : "rgba(255, 252, 248, 0.08)";
   const dividerColor = light ? "rgba(28, 22, 16, 0.12)" : "rgba(255, 252, 248, 0.12)";
 
-  return (
-    <Link
-      href={`/book/${book.id}`}
-      className="group relative flex-shrink-0"
-      style={{ width: `${width}px` }}
-    >
+  const spineInner = (
+    <>
       <div
         className="relative cursor-pointer transition-all duration-200 ease-out group-hover:-translate-y-3 group-hover:shadow-2xl w-full"
         style={{ height: `${height}px` }}
@@ -348,11 +345,6 @@ export default function BookSpine({ book }: BookSpineProps) {
             className="absolute inset-0 flex flex-col items-center justify-between py-3 px-0.5 overflow-hidden z-30"
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
           >
-            {/* Status indicator — non-breaking space keeps the flex slot stable when empty */}
-            <div style={{ color: mutedColor, fontSize: "7px", flexShrink: 0 }}>
-              {book.status === "reading" ? "●" : book.status === "finished" ? "✓" : "\u00A0"}
-            </div>
-
             <span
               className="font-semibold text-center leading-snug"
               style={{
@@ -381,28 +373,75 @@ export default function BookSpine({ book }: BookSpineProps) {
           </div>
 
           <div
-            className="absolute bottom-0 left-0 right-0 pointer-events-none z-20"
+            className="absolute bottom-0 left-0 right-0 pointer-events-none z-20 flex items-center justify-center"
             style={{
               height: "16px",
               backgroundColor: accentBg,
               borderTop: `1px solid ${dividerColor}`,
             }}
-          />
-        </div>
-
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center z-50 pointer-events-none">
-          <div className="bg-stone-900 text-white text-xs rounded-md px-3 py-2 whitespace-nowrap shadow-xl">
-            <p className="font-medium tracking-wide">{book.title}</p>
-            <p className="text-stone-400 mt-0.5 tracking-wider text-[10px]">{book.author}</p>
-            {book.rating && (
-              <p className="text-amber-400 mt-1 text-[10px]">
-                {"★".repeat(book.rating)}{"☆".repeat(5 - book.rating)}
-              </p>
+          >
+            {book.status === "reading" && (
+              <div style={{
+                width: "5px", height: "5px", borderRadius: "50%",
+                background: "rgba(196,130,80,0.9)",
+                boxShadow: "0 0 4px rgba(196,130,80,0.5)",
+              }} />
+            )}
+            {book.status === "finished" && (
+              <div style={{
+                width: "5px", height: "5px", borderRadius: "50%",
+                background: "rgba(196,158,50,0.85)",
+                boxShadow: "0 0 4px rgba(196,158,50,0.45)",
+              }} />
             )}
           </div>
-          <div className="w-2 h-2 bg-stone-900 rotate-45 -mt-1" />
         </div>
+
       </div>
+
+      {/* Tooltip lives outside the animated div so transforms don't affect its stacking context */}
+      <div
+        className="absolute hidden group-hover:flex flex-col pointer-events-none z-50"
+        style={{ bottom: "max(100%, 360px)", marginBottom: "10px", left: "8px" }}
+      >
+        <div className="bg-stone-900 text-white text-xs rounded-md px-3 py-2 whitespace-nowrap shadow-xl">
+          <p className="font-medium tracking-wide">{book.title}</p>
+          <p className="text-stone-400 mt-0.5 tracking-wider text-[10px]">{book.author}</p>
+          {book.rating && (
+            <p className="text-amber-400 mt-1 text-[10px]">
+              {"★".repeat(book.rating)}{"☆".repeat(5 - book.rating)}
+            </p>
+          )}
+        </div>
+        {/* Arrow offset so it points to the spine's horizontal center */}
+        <div
+          className="w-2 h-2 bg-stone-900 rotate-45 -mt-1"
+          style={{ marginLeft: `${Math.max(Math.floor(width / 2) - 12, 4)}px` }}
+        />
+      </div>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(book)}
+        className="group relative flex-shrink-0 hover:z-[100] bg-transparent border-0 p-0 text-left"
+        style={{ width: `${width}px` }}
+      >
+        {spineInner}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={`/book/${book.id}`}
+      className="group relative flex-shrink-0 hover:z-[100]"
+      style={{ width: `${width}px` }}
+    >
+      {spineInner}
     </Link>
   );
 }
