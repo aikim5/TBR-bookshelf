@@ -1,7 +1,13 @@
+import { readFile } from "fs/promises";
+import { join } from "path";
+
 import { Book, ReadingStatus } from "@/types/book";
 import { spineOverrides, DEFAULT_COVER_COLOR } from "@/data/spine-overrides";
+import { resolveLocalCoverForBook } from "@/lib/localCoverResolve";
 
 import { Vibrant } from "node-vibrant/node";
+
+export { resolveLocalCoverPath, resolveLocalCoverForBook } from "@/lib/localCoverResolve";
 
 // ─── Notion API types (minimal) ────────────────────────────────────────────
 
@@ -91,9 +97,13 @@ function pageToBook(page: NotionPage): Book {
 
 // ─── Color extraction ────────────────────────────────────────────────────────
 
-async function extractDominantColor(imageUrl: string): Promise<string | null> {
+async function extractDominantColor(imageSrc: string): Promise<string | null> {
   try {
-    const palette = await Vibrant.from(imageUrl).getPalette();
+    const palette = imageSrc.startsWith("/")
+      ? await Vibrant.from(
+          await readFile(join(process.cwd(), "public", imageSrc.replace(/^\//, "")))
+        ).getPalette()
+      : await Vibrant.from(imageSrc).getPalette();
     // Pick the swatch with the highest pixel population — this is the color
     // that occupies the most area on the actual cover, giving the closest
     // visual match to what you see on the physical book.
@@ -139,9 +149,13 @@ export async function getBooks(): Promise<Book[]> {
   const data = await res.json();
   const pages: NotionPage[] = data.results ?? [];
 
-  // Map pages to books, then extract cover colors in parallel.
+  // Map pages to books, prefer local `public/covers/` (see localCoverResolve), then extract colors.
   // Skip extraction for books with an explicit manual color override.
   const books = pages.map(pageToBook);
+  for (const book of books) {
+    const local = resolveLocalCoverForBook(book);
+    if (local) book.coverImage = local;
+  }
   await Promise.all(
     books.map(async (book) => {
       const hasColorOverride = (spineOverrides[book.title]?.coverColor) != null;

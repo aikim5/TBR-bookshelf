@@ -6,7 +6,8 @@
     "dev": "NODE_EXTRA_CA_CERTS=/etc/ssl/cert.pem next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync-spine-colors": "node scripts/sync-spine-colors.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
