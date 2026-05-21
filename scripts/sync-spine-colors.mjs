@@ -93,8 +93,8 @@ function loadEnvLocal() {
 
 function text(prop) {
   if (!prop) return "";
-  if (prop.type === "title") return prop.title[0]?.plain_text ?? "";
-  if (prop.type === "rich_text") return prop.rich_text[0]?.plain_text ?? "";
+  if (prop.type === "title") return prop.title.map((t) => t.plain_text).join("");
+  if (prop.type === "rich_text") return prop.rich_text.map((t) => t.plain_text).join("");
   return "";
 }
 

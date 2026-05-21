@@ -27,6 +27,7 @@ type NotionProperty =
   | { type: "rich_text"; rich_text: { plain_text: string }[] }
   | { type: "number";    number:    number | null }
   | { type: "select";    select:    { name: string } | null }
+  | { type: "status";    status:    { name: string } | null }
   | { type: "files";     files:     NotionFile[] }
   | { type: "date";      date:      { start: string } | null };
 
@@ -34,9 +35,30 @@ type NotionProperty =
 
 function text(prop: NotionProperty | undefined): string {
   if (!prop) return "";
-  if (prop.type === "title")     return prop.title[0]?.plain_text     ?? "";
-  if (prop.type === "rich_text") return prop.rich_text[0]?.plain_text ?? "";
+  if (prop.type === "title") {
+    return prop.title.map((t) => t.plain_text).join("");
+  }
+  if (prop.type === "rich_text") {
+    return prop.rich_text.map((t) => t.plain_text).join("");
+  }
   return "";
+}
+
+function getProperty(
+  properties: Record<string, NotionProperty>,
+  ...names: string[]
+): NotionProperty | undefined {
+  for (const name of names) {
+    if (properties[name]) return properties[name];
+  }
+  const byLower = new Map(
+    Object.entries(properties).map(([k, v]) => [k.toLowerCase(), v])
+  );
+  for (const name of names) {
+    const found = byLower.get(name.toLowerCase());
+    if (found) return found;
+  }
+  return undefined;
 }
 
 function num(prop: NotionProperty | undefined): number {
@@ -47,6 +69,13 @@ function num(prop: NotionProperty | undefined): number {
 function select(prop: NotionProperty | undefined): string {
   if (!prop || prop.type !== "select") return "";
   return prop.select?.name ?? "";
+}
+
+function statusName(prop: NotionProperty | undefined): string {
+  if (!prop) return "";
+  if (prop.type === "status") return prop.status?.name ?? "";
+  if (prop.type === "select") return prop.select?.name ?? "";
+  return "";
 }
 
 function fileUrl(prop: NotionProperty | undefined): string | undefined {
@@ -62,33 +91,33 @@ function dateStr(prop: NotionProperty | undefined): string | undefined {
 }
 
 function mapStatus(raw: string): ReadingStatus {
-  const s = raw.toLowerCase();
-  if (s.includes("reading"))  return "reading";
-  if (s.includes("finish") || s.includes("done") || s.includes("read")) {
-    // "Not started" and "to read" fall through to to-read; only "finished"/"done" → finished
-    if (s === "finished" || s === "done" || s === "completed") return "finished";
-  }
+  const s = raw.toLowerCase().trim();
+  if (!s) return "to-read";
+  if (s.includes("reading")) return "reading";
+  if (s === "done" || s === "finished" || s === "completed") return "finished";
   return "to-read";
 }
 
 function pageToBook(page: NotionPage): Book {
   const p = page.properties;
-  const title = text(p["Title"] ?? p["Name"]);
+  const title = text(getProperty(p, "Title", "Name"));
   const overrides = spineOverrides[title] ?? {};
 
   return {
     id:           page.id.replace(/-/g, ""),
     title,
-    author:       text(p["Author"]),
-    genre:        select(p["Genre"]) || text(p["Genre"]),
-    pages:        num(p["Pages"]),
-    status:       mapStatus(select(p["Status"])),
-    summary:      text(p["Summary"] ?? p["Plot summary"]),
-    review:       text(p["Review"]) || undefined,
-    rating:       num(p["Rating"]) || undefined,
-    startedDate:  dateStr(p["Started Date"] ?? p["StartedDate"]),
-    finishedDate: dateStr(p["Finished Date"] ?? p["FinishedDate"]),
-    coverImage:   fileUrl(p["Cover"]),
+    author:       text(getProperty(p, "Author")),
+    genre:        select(getProperty(p, "Genre")) || text(getProperty(p, "Genre")),
+    pages:        num(getProperty(p, "Pages")),
+    status:       mapStatus(statusName(getProperty(p, "Status"))),
+    summary:      text(
+      getProperty(p, "Summary", "Plot summary", "Plot Summary", "Description", "Blurb")
+    ),
+    review:       text(getProperty(p, "Review")) || undefined,
+    rating:       num(getProperty(p, "Rating")) || undefined,
+    startedDate:  dateStr(getProperty(p, "Started Date", "StartedDate")),
+    finishedDate: dateStr(getProperty(p, "Finished Date", "FinishedDate")),
+    coverImage:   fileUrl(getProperty(p, "Cover")),
     coverColor:   overrides.coverColor ?? DEFAULT_COVER_COLOR,
     spineHeight:  overrides.spineHeight,
     spineWidth:   overrides.spineWidth,

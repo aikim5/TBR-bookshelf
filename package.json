@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sync-spine-colors": "node scripts/sync-spine-colors.mjs"
+    "sync-spine-colors": "node scripts/sync-spine-colors.mjs",
+    "update-notion-summaries": "NODE_EXTRA_CA_CERTS=/etc/ssl/cert.pem node scripts/update-notion-summaries.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",

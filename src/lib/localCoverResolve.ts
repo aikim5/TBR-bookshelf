@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 
 import type { Book } from "@/types/book";
@@ -50,8 +50,16 @@ export function localCoverBasenames(
   const compactTitle = compactSlugForCover(book.title);
   const compactAuthor = compactSlugForCover(book.author);
   if (compactTitle) {
-    if (compactAuthor) basenames.push(`${compactTitle}_${compactAuthor}`);
-    else basenames.push(compactTitle);
+    if (compactAuthor) {
+      basenames.push(`${compactTitle}_${compactAuthor}`);
+      const authorWords = book.author.trim().split(/\s+/).filter(Boolean);
+      if (authorWords.length === 2) {
+        const reversed = `${compactSlugForCover(authorWords[1])}${compactSlugForCover(authorWords[0])}`;
+        if (reversed !== compactAuthor) basenames.push(`${compactTitle}_${reversed}`);
+      }
+    } else {
+      basenames.push(compactTitle);
+    }
   }
 
   return basenames;
@@ -71,11 +79,35 @@ function firstExistingSiteCover(
   return null;
 }
 
+/** When author slug differs slightly (e.g. West vs Wiest), use the only `title_*` file. */
+function fuzzyCoverByTitlePrefix(
+  book: Pick<Book, "title">,
+  cwd: string
+): string | null {
+  const compactTitle = compactSlugForCover(book.title);
+  if (!compactTitle) return null;
+
+  const dir = join(cwd, "public", "covers");
+  const prefix = `${compactTitle}_`;
+  const matches: string[] = [];
+  for (const name of readdirSync(dir)) {
+    const lower = name.toLowerCase();
+    if (!lower.startsWith(prefix)) continue;
+    if (!LOCAL_COVER_EXTENSIONS.some((ext) => lower.endsWith(ext))) continue;
+    matches.push(name);
+  }
+  if (matches.length !== 1) return null;
+  return `/covers/${matches[0]}`;
+}
+
 export function resolveLocalCoverForBook(
   book: Pick<Book, "id" | "title" | "author">,
   cwd: string = process.cwd()
 ): string | null {
-  return firstExistingSiteCover(localCoverBasenames(book), cwd);
+  return (
+    firstExistingSiteCover(localCoverBasenames(book), cwd) ??
+    fuzzyCoverByTitlePrefix(book, cwd)
+  );
 }
 
 /** Id-based basename only (same as first candidate in resolveLocalCoverForBook). */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import { Book } from "@/types/book";
 
@@ -47,7 +47,12 @@ const STATUS_PILL: Record<
 };
 
 export default function BookOpenOverlay({ book, onClose }: Props) {
+  const [coverError, setCoverError] = useState(false);
   const coverRotateY = useMotionValue(0);
+
+  useEffect(() => {
+    setCoverError(false);
+  }, [book.id]);
 
   useEffect(() => {
     coverRotateY.set(0);
@@ -306,7 +311,7 @@ export default function BookOpenOverlay({ book, onClose }: Props) {
                     "2px 0 12px rgba(0,0,0,0.25), inset -1px 0 0 rgba(255,255,255,0.06)",
                 }}
               >
-                {book.coverImage && (
+                {book.coverImage && !coverError && (
                   <img
                     src={book.coverImage}
                     alt={book.title}
@@ -318,6 +323,7 @@ export default function BookOpenOverlay({ book, onClose }: Props) {
                       height: "100%",
                       objectFit: "contain",
                     }}
+                    onError={() => setCoverError(true)}
                   />
                 )}
               </div>
