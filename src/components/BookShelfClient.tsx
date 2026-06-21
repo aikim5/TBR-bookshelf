@@ -8,14 +8,17 @@ import Bookend from "@/components/Bookend";
 import BookOpenOverlay from "@/components/BookOpenOverlay";
 import { Book } from "@/types/book";
 
+// bookend (162) + plant (180) + ~14 spines + gaps — room for a few more books
+const SHELF_MIN_WIDTH = 1320;
+
 function ShelfPlank() {
   return (
-    <div className="relative" style={{ marginTop: "-1px", minWidth: "1000px" }}>
+    <div className="relative w-full" style={{ marginTop: "-1px", minWidth: SHELF_MIN_WIDTH }}>
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden w-full"
         style={{
           height: "26px",
-          minWidth: "1000px",
+          minWidth: SHELF_MIN_WIDTH,
           borderRadius: "8px 8px 0 0",
           background:
             "linear-gradient(to bottom, #D4AA74 0%, #C49850 35%, #B08844 70%, #9A7436 100%)",
@@ -23,10 +26,10 @@ function ShelfPlank() {
         }}
       >
         <svg
-          className="absolute inset-0"
-          width="1000"
+          className="absolute inset-0 w-full"
           height="26"
           viewBox="0 0 1000 26"
+          preserveAspectRatio="none"
           style={{ pointerEvents: "none" }}
         >
           <defs>
@@ -173,9 +176,10 @@ function ShelfPlank() {
         </svg>
       </div>
       <div
+        className="w-full"
         style={{
           height: "6px",
-          minWidth: "1000px",
+          minWidth: SHELF_MIN_WIDTH,
           background:
             "linear-gradient(to bottom, #8A6030 0%, #6A4820 60%, #4A3010 100%)",
           borderRadius: "0 0 7px 7px",
@@ -196,10 +200,13 @@ export default function BookShelfClient({ books }: Props) {
 
   return (
     <>
-      <div className="relative w-full">
-        <div className="flex w-full justify-center">
+      <div className="relative w-full overflow-x-auto">
+        <div
+          className="mx-auto"
+          style={{ minWidth: SHELF_MIN_WIDTH, width: "fit-content", maxWidth: "100%" }}
+        >
           <div
-            className="flex items-end justify-center gap-1.5 pb-0 flex-wrap"
+            className="flex items-end justify-center gap-1.5 pb-0 flex-nowrap"
             style={{ position: "relative", zIndex: 1 }}
           >
             <Bookend />
@@ -212,14 +219,6 @@ export default function BookShelfClient({ books }: Props) {
             ))}
             <Plant />
           </div>
-        </div>
-        <div
-          className="flex w-full justify-center"
-          style={{
-            marginLeft: "-1.5rem",
-            marginRight: "-1.5rem",
-          }}
-        >
           <ShelfPlank />
         </div>
       </div>

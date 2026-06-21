@@ -10,7 +10,7 @@ export default async function Home() {
   };
 
   return (
-    <main className="max-w-screen-xl mx-auto px-6 py-10">
+    <main className="max-w-[1440px] mx-auto px-6 py-10">
       {/* Header */}
       <div className="mb-10">
         <p className="text-xs uppercase tracking-[0.25em] text-stone-400 mb-2 font-light">
